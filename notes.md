@@ -68,3 +68,57 @@ If Buildx still fails, debug your Docker setup:
 ---
 
 Let me know if further assistance is needed!
+
+____
+I understand you're encountering a 404 error when attempting to download the Docker Buildx binary for your Raspberry Pi 3B. This issue arises because the specific version or architecture of the binary isn't available at the provided URL. To resolve this, you can install Docker Buildx using Docker's official installation script, which ensures compatibility with your system's architecture.
+
+**Step-by-Step Installation Guide:**
+
+1. **Remove Any Existing Buildx Plugin:**
+   If you have a previous installation of Buildx, it's advisable to remove it to prevent conflicts:
+   ```bash
+   rm -f ~/.docker/cli-plugins/docker-buildx
+   ```
+
+2. **Download and Install the Official Docker Installation Script:**
+   This script will install Docker along with the Buildx plugin:
+   ```bash
+   curl -fsSL https://get.docker.com -o get-docker.sh
+   sudo sh get-docker.sh
+   ```
+
+3. **Verify the Installation:**
+   After the installation completes, confirm that Docker and Buildx are correctly installed:
+   ```bash
+   docker --version
+   docker buildx version
+   ```
+   You should see version information for both Docker and Buildx, indicating successful installation.
+
+4. **Set Up Buildx:**
+   Initialize a new builder instance and set it as the default:
+   ```bash
+   docker buildx create --name mybuilder --use
+   docker buildx inspect --bootstrap
+   ```
+   This sets up Buildx to use the BuildKit builder toolkit, enabling advanced build features.
+
+5. **Re-run Your Setup Script:**
+   With Buildx properly installed, you can now execute your setup script:
+   ```bash
+   curl -s https://raw.githubusercontent.com/judahpaul16/gpt-home/main/contrib/setup.sh | \
+       bash -s -- --no-build
+   ```
+   This command pulls the latest image from DockerHub without building it locally.
+
+**Additional Considerations:**
+
+- **Architecture Compatibility:** Ensure that your Raspberry Pi 3B is running an operating system compatible with Docker and Buildx. The Raspberry Pi 3B typically uses an ARMv7 architecture.
+
+- **Permissions:** If you encounter permission issues, you might need to add your user to the Docker group:
+  ```bash
+  sudo usermod -aG docker $USER
+  ```
+  After running this command, log out and back in to apply the changes.
+
+By following these steps, you should be able to install Docker and the Buildx plugin on your Raspberry Pi 3B, allowing you to proceed with your project setup. 
