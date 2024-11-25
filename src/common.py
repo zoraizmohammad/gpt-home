@@ -32,6 +32,8 @@ import json
 import time
 import os
 import re
+import openai  # Added OpenAI library for TTS integration
+
 
 SOURCE_DIR = Path(__file__).parent
 log_file_path = SOURCE_DIR / "events.log"
@@ -66,16 +68,9 @@ executor = ThreadPoolExecutor()
 # Initialize the speech recognition engine
 r = sr.Recognizer()
 
-# Initialize the LiteLLM API key
-litellm.api_key = os.getenv("LITELLM_API_KEY", os.getenv("OPENAI_API_KEY"))
+# Configure OpenAI API Key
+openai.api_key = os.getenv("OPENAI_API_KEY", os.getenv("LITELLM_API_KEY"))
 
-# Initialize the text-to-speech engine
-engine = pyttsx3.init()
-# Set properties
-engine.setProperty('rate', 145)
-engine.setProperty('volume', 1.0)
-# Direct audio to specific hardware
-engine.setProperty('alsa_device', 'hw:Headphones,0')
 speak_lock = asyncio.Lock()
 display_lock = asyncio.Lock()
 
@@ -284,12 +279,29 @@ async def display_state(state, display, stop_event):
                 display.show()
                 await asyncio.sleep(0.5)
 
+# Function to speak using OpenAI's TTS
 async def speak(text, stop_event=asyncio.Event()):
     async with speak_lock:
         loop = asyncio.get_running_loop()
+
         def _speak():
-            engine.say(text)
-            engine.runAndWait()
+            try:
+                # Request OpenAI's TTS with the Alloy voice
+                response = openai.Audio.create(
+                    text=text,
+                    model="tts-1",  # Replace with OpenAI's TTS model ID if available
+                    voice="alloy"  # Specify the Alloy voice
+                )
+                # Save audio to file
+                audio_content = response["audio"]
+                with open("output.mp3", "wb") as f:
+                    f.write(audio_content)
+
+                # Play audio (Linux example with mpg123)
+                os.system("mpg123 output.mp3")
+            except Exception as e:
+                logger.error(f"Failed to generate or play TTS: {e}")
+
         await loop.run_in_executor(executor, _speak)
         stop_event.set()
 
